@@ -142,6 +142,8 @@ function PlayState:update(dt)
                 gSounds['error']:play()
                 self.highlightedTile = nil
             else
+                --local variable to track if we have matches
+                local hasMatches = false
 
                 -- swap grid positions of tiles
                 local tempX = self.highlightedTile.gridX
@@ -168,8 +170,33 @@ function PlayState:update(dt)
 
                 -- once the swap is finished, we can tween falling blocks as needed
                 :finish(function()
-                    self:calculateMatches()
+                    hasMatches = self:calculateMatches()
                 end)
+
+                --since we don't have matches, swap the tiles and tween them back to their original positions
+                if hasMatches == false then
+                  print("NewTile X: " .. newTile.x .. "X" .. x)
+                  -- swap grid positions of tiles
+
+                  self.highlightedTile.gridX = tempX
+                  self.highlightedTile.gridY = tempY
+
+                  local newTile2 = self.board.tiles[y][x]
+
+                  newTile.gridX = newTile2.gridX
+                  newTile.gridY = newTile2.gridY
+
+                  -- put tiles back in their original positions in the table
+                  self.board.tiles[newTile.y][newTile.x] = self.highlightedTile
+
+                  self.board.tiles[newTile2.y][newTile2.x] = newTile
+
+                  -- tween coordinates between the two so they swap
+                  Timer.tween(0.1, {
+                      [self.highlightedTile] = {x = self.highlightedTile.x, y = self.highlightedTile.y},
+                      [newTile] = {x = newTile.x, y = newTile.y}
+                  })
+                end
             end
         end
     end
@@ -188,8 +215,9 @@ function PlayState:calculateMatches()
 
   -- if we have any matches, remove them and tween the falling blocks that result
   local matches = self.board:calculateMatches()
-
+  local hasMatches = false
   if matches then
+    hasMatches = true
     -- adds the timer amounts
     self.timer = self.timer + 1
 
@@ -274,11 +302,12 @@ function PlayState:calculateMatches()
         -- as a result of falling blocks once new blocks have finished falling
         self:calculateMatches()
     end)
-
 -- if no matches, we can continue playing
   else
-      self.canInput = true
+    self.canInput = true
   end
+
+  return hasMatches
 end
 
 function PlayState:render()
