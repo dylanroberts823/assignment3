@@ -34,7 +34,7 @@ function Board:initializeTiles()
 
             -- create a new tile at X,Y with a random color
             -- variety is determined by the level, where up to level 6, the varieties become more complex
-            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(18), math.random(math.min(self.level - 1, 6))))
+            table.insert(self.tiles[tileY], Tile(tileX, tileY, math.random(math.min(self.level + 8, 18)), math.random(math.min(self.level - 1, 6))))
         end
     end
 
@@ -168,10 +168,33 @@ end
     them to nil, then setting self.matches to nil.
 ]]
 function Board:removeMatches()
+    --A table to keep track of the shiny tiles
+    local shinyTiles = {}
+    --Eliminate all the matching tiles first
     for k, match in pairs(self.matches) do
         for k, tile in pairs(match) do
+            --if the tile has a shine
+            if tile.shine == true then
+              -- track that shine as one needing to be eliminated
+              table.insert(shinyTiles, tile)
+            end
+
+            --eliminate that tile
             self.tiles[tile.gridY][tile.gridX] = nil
         end
+    end
+
+    --Eliminate all the tiles in the X and Y
+    for k, tile in pairs(shinyTiles) do
+      for x = 1, 8 do
+        for y = 1, 8 do
+          if self.tiles[y][x] ~= nil then
+            if self.tiles[y][x].gridY == tile.gridY then
+              self.tiles[y][x] = nil
+            end
+          end
+        end
+      end
     end
 
     self.matches = nil
@@ -242,13 +265,12 @@ function Board:getFallingTiles()
             if not tile then
 
                 -- new tile with random color and variety
-                local tile = Tile(x, y, math.random(18), math.random(math.min(self.level - 1, 6)))
+                local tile = Tile(x, y, math.random(math.min(self.level + 8, 18)), math.random(math.min(self.level - 1, 6)))
                 tile.y = -32
 
 
                 -- randomly apply a shine to the tile
-                -- TESTING, change to == math.random(32)
-                if 1 == 1 then
+                if 1 == math.random(16) then
                   tile.shine = true
                 end
 
