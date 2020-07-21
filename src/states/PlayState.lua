@@ -184,51 +184,101 @@ end
     to the Board class.
 ]]
 function PlayState:calculateMatches()
-    self.highlightedTile = nil
+  self.highlightedTile = nil
 
-    -- if we have any matches, remove them and tween the falling blocks that result
-    local matches = self.board:calculateMatches()
+  -- if we have any matches, remove them and tween the falling blocks that result
+  local matches = self.board:calculateMatches()
 
-    if matches then
-        -- adds the timer amounts
-        self.timer = self.timer + 1
+  if matches then
+    -- adds the timer amounts
+    self.timer = self.timer + 1
 
-        --sound effects
-        gSounds['match']:stop()
-        gSounds['match']:play()
+    --sound effects
+    gSounds['match']:stop()
+    gSounds['match']:play()
 
-        -- add score for each match
-        for k, match in pairs(matches) do
-            self.score = self.score + #match * 50
 
-            --add bonus points for tiles with high variety levels
-            for l, tile in pairs(match) do
-              if tile.variety > 0 then
-                self.score = self.score + tile.variety * 50
-              end
-            end
 
+    -- adding score section
+    for k, match in pairs(matches) do
+      -- variable to track if it's a horizontal match
+      local horizontalMatch = false
+      local firstX = nil
+
+      --track shiny tiles
+      local shinyTiles = {}
+
+      for l, tile in pairs(match) do
+        --First, we'll check to see if our match is horizontal or vertical
+        --Check if this tile's X is the last X of this match
+        if tile.gridX == firstX then
+          --since it is, note that this is a horizontal match
+          horizontalMatch = true
+        else
+          firstX = tile.gridX
         end
 
-        -- remove any tiles that matched from the board, making empty spaces
-        self.board:removeMatches()
+        --Next, we'll add any shiny tiles to our shiny tiles table
+        if tile.shine == true then
+          --variable to track if that tile has the same row as those in shiny tiles
+          local sameRow = false
 
-        -- gets a table with tween values for tiles that should now fall
-        local tilesToFall = self.board:getFallingTiles()
+          --check all the tiles in shinyTiles to be sure none have the same row
+          for l, tile2 in pairs(shinyTiles) do
+            if tile2.gridY == tile.gridY then
+              --if they do have the same row, then add them
+              sameRow = true
+            end
+          end
 
-        -- tween new tiles that spawn from the ceiling over 0.25s to fill in
-        -- the new upper gaps that exist
-        Timer.tween(0.25, tilesToFall):finish(function()
+          --if they don't have the same row, add them to the table
+          if sameRow == false then
+            table.insert(shinyTiles, tile)
+          end
+        end
 
-            -- recursively call function in case new matches have been created
-            -- as a result of falling blocks once new blocks have finished falling
-            self:calculateMatches()
-        end)
+        --add bonus points for tiles of a higher variety
+        if tile.variety > 1 then
+          self.score = self.score + tile.variety * 50
+        end
+      end
 
-    -- if no matches, we can continue playing
-    else
-        self.canInput = true
+      -- add base score for every tile matched
+      self.score = self.score + #match * 50
+
+      --if this match is horizontal
+      if horizontalMatch == true then
+        -- add bonus points for the FIVE remaining tiles that are eliminated in the row
+        self.score = self.score + #shinyTiles * 5 * 50
+      else
+        -- add bonus points for the SEVEN remaining tiles that are eliminated in the row
+        -- since this is a horizontal match
+        self.score = self.score + #shinyTiles * 7 * 50
+      end
     end
+
+
+
+
+    -- remove any tiles that matched from the board, making empty spaces
+    self.board:removeMatches()
+
+    -- gets a table with tween values for tiles that should now fall
+    local tilesToFall = self.board:getFallingTiles()
+
+    -- tween new tiles that spawn from the ceiling over 0.25s to fill in
+    -- the new upper gaps that exist
+    Timer.tween(0.25, tilesToFall):finish(function()
+
+        -- recursively call function in case new matches have been created
+        -- as a result of falling blocks once new blocks have finished falling
+        self:calculateMatches()
+    end)
+
+-- if no matches, we can continue playing
+  else
+      self.canInput = true
+  end
 end
 
 function PlayState:render()
