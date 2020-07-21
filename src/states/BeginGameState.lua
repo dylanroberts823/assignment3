@@ -15,23 +15,22 @@
 BeginGameState = Class{__includes = BaseState}
 
 function BeginGameState:init()
-    
+
     -- start our transition alpha at full, so we fade in
     self.transitionAlpha = 255
-
-    -- spawn a board and place it toward the right
-    self.board = Board(VIRTUAL_WIDTH - 272, 16)
 
     -- start our level # label off-screen
     self.levelLabelY = -64
 end
 
 function BeginGameState:enter(def)
-    
+
     -- grab level # from the def we're passed
     self.level = def.level
 
     --
+    -- spawn a board and place it toward the right
+    self.board = Board(VIRTUAL_WIDTH - 272, 16, self.level)
     -- animate our white screen fade-in, then animate a drop-down with
     -- the level text
     --
@@ -40,23 +39,23 @@ function BeginGameState:enter(def)
     Timer.tween(1, {
         [self] = {transitionAlpha = 0}
     })
-    
+
     -- once that's finished, start a transition of our text label to
     -- the center of the screen over 0.25 seconds
     :finish(function()
         Timer.tween(0.25, {
             [self] = {levelLabelY = VIRTUAL_HEIGHT / 2 - 8}
         })
-        
+
         -- after that, pause for one second with Timer.after
         :finish(function()
             Timer.after(1, function()
-                
+
                 -- then, animate the label going down past the bottom edge
                 Timer.tween(0.25, {
                     [self] = {levelLabelY = VIRTUAL_HEIGHT + 30}
                 })
-                
+
                 -- once that's complete, we're ready to play!
                 :finish(function()
                     gStateMachine:change('play', {
@@ -74,7 +73,7 @@ function BeginGameState:update(dt)
 end
 
 function BeginGameState:render()
-    
+
     -- render board of tiles
     self.board:render()
 
