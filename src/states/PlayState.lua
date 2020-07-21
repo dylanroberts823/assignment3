@@ -200,6 +200,14 @@ function PlayState:calculateMatches()
         -- add score for each match
         for k, match in pairs(matches) do
             self.score = self.score + #match * 50
+
+            --add bonus points for tiles with high variety levels
+            for l, tile in pairs(match) do
+              if tile.variety > 0 then
+                self.score = self.score + tile.variety * 50
+              end
+            end
+
         end
 
         -- remove any tiles that matched from the board, making empty spaces
