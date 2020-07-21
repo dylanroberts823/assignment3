@@ -244,6 +244,15 @@ function Board:getFallingTiles()
                 -- new tile with random color and variety
                 local tile = Tile(x, y, math.random(18), math.random(math.min(self.level - 1, 6)))
                 tile.y = -32
+
+
+                -- randomly apply a shine to the tile
+                -- TESTING, change to == math.random(32)
+                if 1 == 1 then
+                  tile.shine = true
+                end
+
+                -- add the tile to our table
                 self.tiles[y][x] = tile
 
                 -- create a new tween to return for this tile to fall down
@@ -260,7 +269,22 @@ end
 function Board:render()
     for y = 1, #self.tiles do
         for x = 1, #self.tiles[1] do
-            self.tiles[y][x]:render(self.x, self.y)
+            local tile = self.tiles[y][x]
+
+            tile:render(self.x, self.y)
+
+            -- add the color of a shine if tile.shine is true
+            if tile.shine == true then
+              -- multiply so drawing white rect makes it brighter
+              love.graphics.setBlendMode('add')
+
+              love.graphics.setColor(255, 255, 204, 90)
+              love.graphics.rectangle('fill', (tile.gridX - 1) * 32 + (VIRTUAL_WIDTH - 272),
+                  (tile.gridY - 1) * 32 + 16, 32, 32, 4)
+
+              -- back to alpha
+              love.graphics.setBlendMode('alpha')
+            end
         end
     end
 end

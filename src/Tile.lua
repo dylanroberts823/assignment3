@@ -14,7 +14,7 @@
 Tile = Class{}
 
 function Tile:init(x, y, color, variety)
-    
+
     -- board positions
     self.gridX = x
     self.gridY = y
@@ -26,10 +26,13 @@ function Tile:init(x, y, color, variety)
     -- tile appearance/points
     self.color = color
     self.variety = variety
+
+    -- tile shine property
+    self.shine = false
 end
 
 function Tile:render(x, y)
-    
+
     -- draw shadow
     love.graphics.setColor(34, 32, 52, 255)
     love.graphics.draw(gTextures['main'], gFrames['tiles'][self.color][self.variety],
