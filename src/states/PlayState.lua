@@ -162,40 +162,58 @@ function PlayState:update(dt)
 
                 self.board.tiles[newTile.gridY][newTile.gridX] = newTile
 
-                -- tween coordinates between the two so they swap
-                Timer.tween(0.1, {
-                    [self.highlightedTile] = {x = newTile.x, y = newTile.y},
-                    [newTile] = {x = self.highlightedTile.x, y = self.highlightedTile.y}
-                })
+                --save the highlighted tile
+                local highlightedTile = self.highlightedTile
 
-                -- once the swap is finished, we can tween falling blocks as needed
-                :finish(function()
-                    hasMatches = self:calculateMatches()
-                end)
+                hasMatches = self:calculateMatches()
 
-                --since we don't have matches, swap the tiles and tween them back to their original positions
-                if hasMatches == false then
-                  print("NewTile X: " .. newTile.x .. "X" .. x)
-                  -- swap grid positions of tiles
+                --since the self.highlightedTile value was reset during calculateMatches
+                --reset the self.highlightedTile value to the original one
+                self.highlightedTile = highlightedTile
 
-                  self.highlightedTile.gridX = tempX
-                  self.highlightedTile.gridY = tempY
-
-                  local newTile2 = self.board.tiles[y][x]
-
-                  newTile.gridX = newTile2.gridX
-                  newTile.gridY = newTile2.gridY
-
-                  -- put tiles back in their original positions in the table
-                  self.board.tiles[newTile.y][newTile.x] = self.highlightedTile
-
-                  self.board.tiles[newTile2.y][newTile2.x] = newTile
-
+                --only tween if it's true
+                if hasMatches == true then
                   -- tween coordinates between the two so they swap
                   Timer.tween(0.1, {
-                      [self.highlightedTile] = {x = self.highlightedTile.x, y = self.highlightedTile.y},
-                      [newTile] = {x = newTile.x, y = newTile.y}
+                      [highlightedTile] = {x = newTile.x, y = newTile.y},
+                      [newTile] = {x = highlightedTile.x, y = highlightedTile.y}
                   })
+
+                  -- once the swap is finished, we can tween falling blocks as needed
+                  :finish(function()
+                      hasMatches = self:calculateMatches()
+                  end)
+
+                else
+                  --since we don't have a match, double tween to pretend to check
+                  -- tween coordinates between the two so they swap
+                  Timer.tween(0.1, {
+                      [highlightedTile] = {x = newTile.x, y = newTile.y},
+                      [newTile] = {x = highlightedTile.x, y = highlightedTile.y}
+                  })
+                  --once that tween is finished, swap the tiles back
+                  :finish(function()
+                    Timer.tween(0.1, {
+                      [highlightedTile] = {x = newTile.x, y = newTile.y},
+                      [newTile] = {x = highlightedTile.x, y = highlightedTile.y}
+                    })
+                  end)
+
+                  -- swap grid positions of tiles
+                  tempX = highlightedTile.gridX
+                  tempY = highlightedTile.gridY
+
+                  highlightedTile.gridX = newTile.gridX
+                  highlightedTile.gridY = newTile.gridY
+
+                  newTile.gridX = tempX
+                  newTile.gridY = tempY
+
+                  -- swap tiles in the tiles table
+                  self.board.tiles[highlightedTile.gridY][highlightedTile.gridX] =
+                      highlightedTile
+
+                  self.board.tiles[newTile.gridY][newTile.gridX] = newTile
                 end
             end
         end
